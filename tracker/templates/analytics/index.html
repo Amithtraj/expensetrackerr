@@ -1,0 +1,175 @@
+{% extends 'tracker/base.html'%}
+
+{% load bootstrap3 %}
+
+{% load month_labels %}
+
+
+{% block body %}
+
+    <div class="container expense-analytics">
+        {% if context_type == 'statistic'%}
+            <section>
+                <div class="row">
+                <div class="col-md-4">
+                     <div class="analytics-card total-records">
+                        <div class="header">{{total_records}}</div>
+                        <div class="content">Total Records</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="analytics-card total-expenses">
+                        <div class="header">${{total_expenses}}</div>
+                        <div class="content">Total Expenses</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="analytics-card categories">
+                        <div class="header">{{categories}}</div>
+                        <div class="content">Categories</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="analytics-card avg-year">
+                        <div class="header">${{avg_year}}</div>
+                        <div class="content">Avg. year</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="analytics-card avg-month">
+                        <div class="header">${{avg_month}}</div>
+                        <div class="content">Avg. month</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="analytics-card avg-day">
+                        <div class="header">${{avg_day}}</div>
+                        <div class="content">Avg. day</div>
+                    </div>
+                </div>
+            </div>
+            </section>
+            <section>
+                <div class="row">
+                <div>
+                    <h2 style="text-align:center">Check out your expense reports</h2>
+                </div>
+                <div class="col-md-4">
+                    <a href="{% url 'tracker:analytics'%}/{{current_year}}">
+                        <div class="analytics-card avg-year">
+                            <div class="header">Annualy Report</div>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-4">
+                    <a href="{% url 'tracker:analytics'%}/{{current_year}}/{{current_month}}">
+                        <div class="analytics-card avg-month">
+                            <div class="header">Monthly Report</div>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-4">
+                    <a href="{% url 'tracker:analytics'%}/{{current_year}}/{{current_month}}/{{current_day}}">
+                        <div class="analytics-card avg-day">
+                            <div class="header">Daily <br/>Report</div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+            </section>
+        {% endif %}
+
+        {% if menu_labels %}
+        <div class="analysis-menu">
+            <ul class="nav nav-tabs">
+                {% for label in menu_labels %}
+                  <li class="nav-item">
+                      {% if context_type == 'annually' %}
+                        <a class="annually nav-link" href="{% url 'tracker:analytics'%}/{{label}}"> {{label}}</a>
+                      {% elif context_type == 'monthly'%}
+
+                        <a class="annually nav-link" href="{% url 'tracker:analytics'%}/{{selected_year}}/{{label}}"> {{months|get_by_index:label}}</a>
+                      {% endif %}
+                  </li>
+                {% endfor%}
+                </ul>
+        </div>
+        {% endif %}
+
+        {% if context_type == 'annually' or context_type == 'monthly' or context_type == 'daily' %}
+            <div class="row">
+                {% if submenu %}
+                <div class="col-sm-4 col-md-2 sidebar">
+                    <div class="list-group">
+                        <span href="#" class="list-group-item active">
+                            {{x_axis_label}}
+                        </span>
+                        {% for label, amount in submenu %}
+                            <a href="#" class="list-group-item">
+                                <i class="fa fa-bar-chart-o"></i> {{label}} <span class="badge">{{amount}}</span>
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                <div class="col-md-10">
+                    {% if datasets %}
+                        <canvas id="myChart" width="500" height="250"></canvas>
+                        <script>
+            var ctx = document.getElementById("myChart").getContext('2d');
+            var isShowScales = {% if report_type != 'pie' %}true{% else %}false {% endif %};
+            var xAxisLabel = '{{x_axis_label}}';
+            var dataset;
+            var myChart = new Chart(ctx, {
+                type: '{{report_type}}',
+                data: {
+                    labels: {{ labels | safe }},
+                    datasets: {{ datasets | safe}}
+                },
+                options: {
+                    responsive: true,
+                    title: {
+                        display: true,
+                        text: '{{ title }}'
+                    },
+                    tooltips: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    hover: {
+                        mode: 'nearest',
+                        intersect: true
+                    }
+                    ,
+                    scales: {
+                        xAxes: [{
+                            display: isShowScales,
+                            scaleLabel: {
+                                display: isShowScales,
+                                labelString: xAxisLabel
+                            }
+                        }],
+                        yAxes: [{
+                            display: isShowScales,
+                            scaleLabel: {
+                                display: isShowScales,
+                                labelString: 'Amount'
+                            }
+                        }]
+                    }
+                }
+            });
+        </script>
+                    {% else %}
+                        No data
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+    </div>
+
+
+
+    {% endblock %}
+
+
